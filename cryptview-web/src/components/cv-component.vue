@@ -44,22 +44,47 @@
                 </b-progress>
             </b-alert>
         </b-modal>
+        <b-modal id="rewardModal"
+                ref="rewardModal"
+                @ok.prevent="newReward"
+                @shown="clearAll">
+                <b-form-group horizontal
+                            label="Ether(wei):"
+                            label-class="text-sm-right"
+                            class="mb-0">
+                <b-form-input v-model="ether"></b-form-input>
+            </b-form-group>
+            <b-alert :show="dismissCountdown"
+                dismissible
+                variant="warning"
+                @dismissed="dismissCountdown=0"
+                @dismiss-count-down="countdownChanged">
+                <p>{{errorMessage}}</p>
+                <b-progress variant="warning"
+                            :max="dismissSecs"
+                            :value="dismissCountdown"
+                            height="4px">
+                </b-progress>
+            </b-alert>
+        </b-modal>
         <div v-for="(view, index) in viewList" :key="index" class="card">
             <b-card :title="view.author">
                 <p class="card-text">
                     {{ view.content }}
                 </p>
-                <b-button v-on:click="currIndex = index" v-b-modal.myModal variant="link">reply</b-button>
-                <b-button variant="link">like</b-button>
-                <b-button variant="link">reward</b-button>
-                <div v-for="(reply, index) in view.replyList" v-bind:key="index" class="reply">
+                <b-button v-on:click="toReply = index" v-b-modal.myModal variant="link">reply</b-button>
+                <b-button v-on:click="handleLike(index, 0)" variant="link">like: {{ view.likes }}</b-button>
+                <b-button v-on:click="handleReward(index, 0)" v-b-modal.rewardModal variant="link">reward: {{ view.rewards }} wei</b-button>
+                <b-badge>{{ view.time }}</b-badge>
+                <div v-for="(reply, inde) in view.replyList" v-bind:key="inde" class="reply">
                     <hr />
                     <b-card  :title="reply.author">
                         <p class="card-text">
                             {{ reply.content }}
                         </p>
-                        <b-link href="#" class="card-link">like</b-link>
-                        <b-link href="#" class="card-link">reward</b-link>
+                        <b-button v-on:click="handleLike(index, inde + 1)" variant="link">like: {{ reply.likes }}</b-button>
+                        <b-button v-on:click="handleReward(index, inde + 1)" v-b-modal.rewardModal variant="link">reward: {{ reply.rewards }} wei</b-button>
+                        <b-badge>{{ reply.time }}</b-badge>
                     </b-card>
                 </div>
             </b-card>
@@ -73,9 +98,12 @@ export default {
     name: 'cryptview',
     data: function () {
         return {
+            ether: 0,
             nickname: '',
+            rewardV: -1,
+            rewardR: -1,
             content: '',
-            currIndex: -1,
+            toReply: -1,
             dismissSecs: 4,
             dismissCountdown: 0,
             errorMessage: '',
@@ -86,7 +114,8 @@ export default {
             ],
             viewList: [],
             tempList: [],
-            count: 0
+            count: 0,
+            timeing: null
         }
     },
     computed: {
@@ -96,9 +125,68 @@ export default {
     },
     mounted () {
         this.updateViews()
-        setInterval(this.updateViews, 10000)
+        this.timeing = setInterval(this.updateViews, 1000)
     },
     methods: {
+        newReward () {
+            if (this.ether === 0) {
+                this.showAlert('No ether to reward!')
+            } else {
+                console.log(this.ether, this.rewardV, this.rewardR)
+                this.$refs.rewardModal.hide()
+                this.rewardV = this.count - 1 - this.rewardV
+                if (this.rewardR === 0) {
+                    if (this.web3.coinbase === this.viewList[this.rewardV].sender) {
+                        alert('You can\'t reward yourself')
+                    } else {
+                        this.$store.state.contractInstance().reward.sendTransaction(this.rewardV, this.rewardR, {value: this.ether, from: this.web3.coinbase}, (error) => {
+                            if (error) {
+                                console.log(error)
+                            }
+                        })
+                    }
+                } else {
+                    if (this.web3.coinbase === this.viewList[this.rewardV].replyList[this.rewardR - 1].sender) {
+                        alert('You can\'t reward yourself')
+                    } else {
+                        this.$store.state.contractInstance().reward.sendTransaction(this.rewardV, this.rewardR, {value: this.ether, from: this.web3.coinbase}, (error) => {
+                            if (error) {
+                                console.log(error)
+                            }
+                        })
+                    }
+                }
+            }
+        },
+        handleReward (toRewardv, toRewardr) {
+            this.rewardV = toRewardv
+            this.rewardR = toRewardr
+        },
+        handleLike (toLikev, toLiker) {
+            console.log(toLikev, toLiker)
+            toLikev = this.count - 1 - toLikev
+            if (toLiker === 0) {
+                if (this.web3.coinbase === this.viewList[toLikev].sender) {
+                    alert('You can\'t upvote yourself')
+                } else {
+                    this.$store.state.contractInstance().like.sendTransaction(toLikev, toLiker, {from: this.web3.coinbase}, (error) => {
+                        if (error) {
+                            console.log(error)
+                        }
+                    })
+                }
+            } else {
+                if (this.web3.coinbase === this.viewList[toLikev].replyList[toLiker - 1].sender) {
+                    alert('You can\'t upvote yourself')
+                } else {
+                    this.$store.state.contractInstance().like.sendTransaction(toLikev, toLiker, {from: this.web3.coinbase}, (error) => {
+                        if (error) {
+                            console.log(error)
+                        }
+                    })
+                }
+            }
+        },
         newReply () {
             let update
             if (this.allowUpdate === 'yes') {
@@ -107,8 +195,8 @@ export default {
             if (this.nickname === '' || this.content === '') {
                 this.showAlert('Please fill in all the blanks')
             } else {
-                console.log('reply to' + this.currIndex)
-                this.$store.state.contractInstance().reply.sendTransaction(this.currIndex, this.content, update, this.nickname, {from: this.web3.coinbase}, (error, result) => {
+                console.log('reply to' + this.toReply)
+                this.$store.state.contractInstance().reply.sendTransaction(this.toReply, this.content, update, this.nickname, {from: this.web3.coinbase}, (error, result) => {
                     if (error) {
                         console.log(error)
                     } else {
@@ -131,6 +219,8 @@ export default {
         },
         updateViews () {
             if (this.$store.state.contractInstance !== null && typeof this.$store.state.contractInstance !== 'undefined') {
+                clearInterval(this.timeing)
+                this.timeing = setInterval(this.updateViews, 20000)
                 this.$store.state.contractInstance().count.call(function (error, result) {
                     if (error) {
                         console.log(error)
@@ -139,48 +229,56 @@ export default {
                         this.count = cnt
                         console.log('updating...')
                         this.tempList = []
-                        this.readViews(cnt - 1, 0, cnt)
+                        this.readViews(0, 0, cnt)
                     }
                 }.bind(this))
             }
         },
         readViews (shareId, replyId, length) {
             if (length > 0) {
-                console.log('readingShare', shareId, replyId)
-                console.log('shit')
                 this.$store.state.contractInstance().ideas.call(shareId, replyId, function (error, result) {
                     if (error) {
                         console.log('error')
                         if (length > 1) {
-                            this.readViews(shareId - 1, 0, length - 1)
+                            this.readViews(shareId + 1, 0, length - 1)
                         } else {
-                            console.log('hey')
+                            this.tempList.reverse()
                             this.viewList = this.tempList
                         }
                     } else {
                         var view = result
+                        var time_ = new Date(view[4].c[0] * 1000).toLocaleString()
                         this.$store.state.contractInstance().getLikes.call(shareId, replyId, function (error, result) {
                             if (error) {
                                 console.log(error)
                             } else {
-                                // var like = result.c[0]
+                                var numOfLike = result.c[0]
                                 this.$store.state.contractInstance().getAllRewards.call(shareId, replyId, function (error, result) {
                                     if (error) {
                                         console.log(error)
                                     } else {
-                                        // var reward = this.$store.state.web3.web3Instance().fromWei(result, 'ether').toString()
+                                        var numOfReward = result.c[0].toString()
                                         if (replyId === 0) {
                                             var newView = {
+                                                sender: view[0],
                                                 author: view[2],
                                                 content: view[1],
-                                                replyList: []
+                                                replyList: [],
+                                                likes: numOfLike,
+                                                rewards: numOfReward,
+                                                time: time_
                                             }
                                             this.tempList.push(newView)
                                         } else {
                                             var newReply = {
+                                                sender: view[0],
                                                 author: view[2],
-                                                content: view[1]
+                                                content: view[1],
+                                                likes: numOfLike,
+                                                rewards: numOfReward,
+                                                time: time_
                                             }
+                                            console.log(shareId)
                                             this.tempList[shareId].replyList.push(newReply)
                                             // Vue.set(this.viewList[this.count - 1 - shareId].replyList, replyId, newReply)
                                         }

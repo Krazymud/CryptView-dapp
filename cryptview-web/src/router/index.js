@@ -1,15 +1,18 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+
 import cryptview from '@/components/cryptview-dapp'
+import about from '@/components/cv-about'
 
-Vue.use(Router)
+const route = [
+  {
+    path: '/',
+    name: 'cryptview',
+    component: cryptview
+  },
+  {
+    path: '/about',
+    name: 'about',
+    component: about
+  }
+]
 
-export default new Router({
-  routes: [
-    {
-      path: '/',
-      name: 'cryptview',
-      component: cryptview
-    }
-  ]
-})
+export default route
