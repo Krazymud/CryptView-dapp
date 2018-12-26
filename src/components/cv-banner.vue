@@ -5,8 +5,8 @@
                 <img src="@/assets/logo.png" alt="CryptView">
             </b-navbar-brand>
             <b-navbar-nav>
-                <b-nav-item class="nav" href='/'>Home</b-nav-item>
-                <b-nav-item variant="link" class="nav" href='/about'>About</b-nav-item>
+                <b-nav-item class="nav" to='/'>Home</b-nav-item>
+                <b-nav-item variant="link" class="nav" to='/about'>About</b-nav-item>
                 <b-button v-b-modal.modalPrevent variant="outline-light">&#x2795;</b-button>
                 <b-modal id="modalPrevent"
                         ref="modal"
