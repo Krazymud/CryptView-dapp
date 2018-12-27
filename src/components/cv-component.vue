@@ -288,7 +288,6 @@ export default {
                     }
                 }.bind(this))
             } else {
-                console.log('hey')
                 this.viewList = this.tempList
             }
         }
