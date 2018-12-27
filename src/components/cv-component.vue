@@ -74,7 +74,7 @@
                 </p>
                 <b-button v-on:click="toReply = index" v-b-modal.myModal variant="link">reply</b-button>
                 <b-button v-on:click="handleLike(index, 0)" variant="link">like: {{ view.likes }}</b-button>
-                <b-button v-on:click="handleReward(index, 0)" v-b-modal.rewardModal variant="link">reward: {{ view.rewards }} wei</b-button>
+                <b-button v-on:click="handleReward(index, 0)" v-b-modal.rewardModal variant="link">reward: {{ view.rewards }} ether</b-button>
                 <b-badge>{{ view.time }}</b-badge>
                 <div v-for="(reply, inde) in view.replyList" v-bind:key="inde" class="reply">
                     <hr />
@@ -83,7 +83,7 @@
                             {{ reply.content }}
                         </p>
                         <b-button v-on:click="handleLike(index, inde + 1)" variant="link">like: {{ reply.likes }}</b-button>
-                        <b-button v-on:click="handleReward(index, inde + 1)" v-b-modal.rewardModal variant="link">reward: {{ reply.rewards }} wei</b-button>
+                        <b-button v-on:click="handleReward(index, inde + 1)" v-b-modal.rewardModal variant="link">reward: {{ reply.rewards }} ether</b-button>
                         <b-badge>{{ reply.time }}</b-badge>
                     </b-card>
                 </div>
@@ -129,6 +129,7 @@ export default {
     },
     methods: {
         newReward () {
+            console.log(this.ether)
             if (this.ether === 0) {
                 this.showAlert('No ether to reward!')
             } else {
@@ -257,7 +258,7 @@ export default {
                                     if (error) {
                                         console.log(error)
                                     } else {
-                                        var numOfReward = result.c[0].toString()
+                                        var numOfReward = this.$store.state.web3.web3Instance().fromWei(result, 'ether').toString()
                                         if (replyId === 0) {
                                             var newView = {
                                                 sender: view[0],
