@@ -238,7 +238,6 @@ export default {
             if (length > 0) {
                 this.$store.state.contractInstance().ideas.call(shareId, replyId, function (error, result) {
                     if (error) {
-                        console.log('error')
                         if (length > 1) {
                             this.readViews(shareId + 1, 0, length - 1)
                         } else {
@@ -278,7 +277,6 @@ export default {
                                                 rewards: numOfReward,
                                                 time: time_
                                             }
-                                            console.log(shareId)
                                             this.tempList[shareId].replyList.push(newReply)
                                             // Vue.set(this.viewList[this.count - 1 - shareId].replyList, replyId, newReply)
                                         }
