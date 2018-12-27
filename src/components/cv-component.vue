@@ -195,6 +195,7 @@ export default {
             if (this.nickname === '' || this.content === '') {
                 this.showAlert('Please fill in all the blanks')
             } else {
+                this.toReply = this.count - 1 - this.toReply
                 console.log('reply to' + this.toReply)
                 this.$store.state.contractInstance().reply.sendTransaction(this.toReply, this.content, update, this.nickname, {from: this.web3.coinbase}, (error, result) => {
                     if (error) {
