@@ -132,13 +132,12 @@ export default {
             if (this.ether === 0) {
                 this.showAlert('No ether to reward!')
             } else {
-                console.log(this.ether, this.rewardV, this.rewardR)
                 this.$refs.rewardModal.hide()
-                this.rewardV = this.count - 1 - this.rewardV
                 if (this.rewardR === 0) {
                     if (this.web3.coinbase === this.viewList[this.rewardV].sender) {
                         alert('You can\'t reward yourself')
                     } else {
+                        this.rewardV = this.count - 1 - this.rewardV
                         this.$store.state.contractInstance().reward.sendTransaction(this.rewardV, this.rewardR, {value: this.ether, from: this.web3.coinbase}, (error) => {
                             if (error) {
                                 console.log(error)
@@ -149,6 +148,7 @@ export default {
                     if (this.web3.coinbase === this.viewList[this.rewardV].replyList[this.rewardR - 1].sender) {
                         alert('You can\'t reward yourself')
                     } else {
+                        this.rewardV = this.count - 1 - this.rewardV
                         this.$store.state.contractInstance().reward.sendTransaction(this.rewardV, this.rewardR, {value: this.ether, from: this.web3.coinbase}, (error) => {
                             if (error) {
                                 console.log(error)
@@ -163,12 +163,11 @@ export default {
             this.rewardR = toRewardr
         },
         handleLike (toLikev, toLiker) {
-            console.log(toLikev, toLiker)
-            toLikev = this.count - 1 - toLikev
             if (toLiker === 0) {
                 if (this.web3.coinbase === this.viewList[toLikev].sender) {
                     alert('You can\'t upvote yourself')
                 } else {
+                    toLikev = this.count - 1 - toLikev
                     this.$store.state.contractInstance().like.sendTransaction(toLikev, toLiker, {from: this.web3.coinbase}, (error) => {
                         if (error) {
                             console.log(error)
@@ -179,6 +178,7 @@ export default {
                 if (this.web3.coinbase === this.viewList[toLikev].replyList[toLiker - 1].sender) {
                     alert('You can\'t upvote yourself')
                 } else {
+                    toLikev = this.count - 1 - toLikev
                     this.$store.state.contractInstance().like.sendTransaction(toLikev, toLiker, {from: this.web3.coinbase}, (error) => {
                         if (error) {
                             console.log(error)
